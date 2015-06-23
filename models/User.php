@@ -2,26 +2,36 @@
 
 namespace app\models;
 
-class User extends \yii\base\Object implements \yii\web\IdentityInterface
+use yii\base\Object;
+use yii\web\IdentityInterface;
+
+class User extends Object implements IdentityInterface
 {
     public $id;
+    public $role;
     public $username;
     public $password;
     public $authKey;
     public $accessToken;
 
+    const ROLE_USER = 1;
+    const ROLE_MODER = 5;
+    const ROLE_ADMIN = 10;
+
     private static $users = [
         '100' => [
             'id' => '100',
             'username' => 'admin',
-            'password' => 'admin',
+            'role' => 10, 
+            'password' => 'gthtwm',
             'authKey' => 'test100key',
             'accessToken' => '100-token',
         ],
         '101' => [
             'id' => '101',
             'username' => 'demo',
-            'password' => 'demo',
+            'password' => '112233',
+            'role' => 1,
             'authKey' => 'test101key',
             'accessToken' => '101-token',
         ],
@@ -48,7 +58,7 @@ class User extends \yii\base\Object implements \yii\web\IdentityInterface
 
         return null;
     }
-
+    
     /**
      * Finds user by username
      *
