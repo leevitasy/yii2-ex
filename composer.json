@@ -1,0 +1,5 @@
+{
+    "require": {
+        "garyjl/yii2-simple_html_dom": "dev-master"
+    }
+}

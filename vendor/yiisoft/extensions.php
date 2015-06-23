@@ -66,4 +66,13 @@ return array (
       '@linslin/yii2/curl' => $vendorDir . '/linslin/yii2-curl',
     ),
   ),
+  'garyjl/yii2-simple_html_dom' => 
+  array (
+    'name' => 'garyjl/yii2-simple_html_dom',
+    'version' => '9999999-dev',
+    'alias' => 
+    array (
+      '@garyjl/simplehtmldom' => $vendorDir . '/garyjl/yii2-simple_html_dom',
+    ),
+  ),
 );

@@ -15,5 +15,6 @@ return array(
     'yii\\bootstrap\\' => array($vendorDir . '/yiisoft/yii2-bootstrap'),
     'yii\\' => array($vendorDir . '/yiisoft/yii2'),
     'linslin\\yii2\\curl\\' => array($vendorDir . '/linslin/yii2-curl'),
+    'garyjl\\simplehtmldom\\' => array($vendorDir . '/garyjl/yii2-simple_html_dom'),
     'cebe\\markdown\\' => array($vendorDir . '/cebe/markdown'),
 );
