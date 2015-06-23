@@ -56,6 +56,10 @@ $config = [
             'assignmentFile' => '@app/rbac/assignments.php',
             'ruleFile' => '@app/rbac/rules.php'
         ],
+        'curl' => array(
+            'class' => 'linslin\yii2\curl\Curl',
+            'options' => array(),
+        ),
     ],
     'params' => $params,
 ];
