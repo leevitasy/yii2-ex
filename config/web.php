@@ -1,6 +1,7 @@
 <?php
 
 $params = require(__DIR__ . '/params.php');
+Yii::setAlias('@app', dirname(__DIR__));
 
 $config = [
     'id' => 'basic',
@@ -21,6 +22,7 @@ $config = [
         ],
         'errorHandler' => [
             'errorAction' => 'ex/error',
+            'maxSourceLines' => 20,
         ],
         'mailer' => [
             'class' => 'yii\swiftmailer\Mailer',
@@ -39,6 +41,13 @@ $config = [
             ],
         ],
         'db' => require(__DIR__ . '/db.php'),
+        'urlManager' => [
+            'rules'=>array(
+                //'<controller>/<action>' => '<controller>/<action>'
+            ),
+            'enablePrettyUrl' => true,
+            'showScriptName' => false,
+        ],
     ],
     'params' => $params,
 ];
