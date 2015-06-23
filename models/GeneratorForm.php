@@ -5,6 +5,7 @@ namespace app\models;
 use Yii;
 use yii\base\Model;
 use yii\di\Container;
+//use yii\base\ErrorException;
 use garyjl\simplehtmldom\SimpleHtmlDom;
 
 /**
@@ -74,29 +75,33 @@ class GeneratorForm extends Model {
      */
     private function getCategory() {
         $category = [];
-        //set_error_handler(create_function('$c, $m, $f, $l', 'return true;'), -1);
-        set_error_handler(
-            create_function(
-                '$c, $m, $f, $l',
-                'throw new ErrorException($errstr, $errno, 0, $errfile, $errline);'
-            ),-1
-        );
+        set_error_handler(create_function('$c, $m, $f, $l', 'return false;'), -1);
+        //set_error_handler(
+        //    create_function(
+        //        '$c, $m, $f, $l',
+        //        'throw new ErrorException($errstr, $errno, 0, $errfile, $errline);'
+        //    ),-1
+        //);
         try {
             $cache = $this->cacheFileInit();
             $content = $cache->get($this->urlCategory);
             if ($content === false) {
                 $content = Yii::$app->curl->get('http://' . $this->urlCategory);
-                $cache->set($this->urlCategory, $content, 0);
-            }
-            $html = SimpleHtmlDom::str_get_html($content);
-            $a = $html->find('td[class=menu_text]', 0)->find('a');
-            $ignore = ['/', 'https://mail.ex.ua/', '/ru/about', '/search'];
-            foreach ($a as $element) {
-                if (!in_array($element->href, $ignore)) {
-                    $category[] = ['url' => $element->href, 'text' => $element->plaintext];
+                if(!empty($content)){
+                  $cache->set($this->urlCategory, $content, 0);
                 }
             }
-        } catch (ErrorException $e) {}
+            if(!empty($content)){
+                $html = SimpleHtmlDom::str_get_html($content);
+                $a = $html->find('td[class=menu_text]', 0)->find('a');
+                $ignore = ['/', 'https://mail.ex.ua/', '/ru/about', '/search'];
+                foreach ($a as $element) {
+                    if (!in_array($element->href, $ignore)) {
+                        $category[] = ['url' => $element->href, 'text' => $element->plaintext];
+                    }
+                }
+            }
+        } catch (Exception $e) {}
         restore_error_handler();
         return $category;
     }
