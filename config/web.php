@@ -48,6 +48,14 @@ $config = [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
         ],
+        'authManager' => [
+            'class' => 'yii\rbac\PhpManager',
+            'defaultRoles' => ['user','moder','admin'], //здесь прописываем роли
+            //зададим куда будут сохраняться наши файлы конфигураций RBAC
+            'itemFile' => '@app/rbac/items.php',
+            'assignmentFile' => '@app/rbac/assignments.php',
+            'ruleFile' => '@app/rbac/rules.php'
+        ],
     ],
     'params' => $params,
 ];
