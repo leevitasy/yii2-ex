@@ -21,16 +21,16 @@ $this->title = 'Generate Action';
     ]); ?>
     <div class="form-group">
         <div class="col-lg-offset-1 col-lg-11">
-            <?= Html::submitButton('Создать категории', 
+            <?= Html::submitButton('Создать категории',
                    [
                     'class' => 'btn btn-primary', 'value' => 'category', 'name' => 'GeneratorForm[create]',
                     'data-confirm' => Yii::t('yii', 'Хотите создать категории?')
                    ]) ?>
             <br /> <br />
-            <?= Html::submitButton('Создать список из категории', 
+            <?= Html::submitButton('Создать список подкатегорий',
                   [
                    'class' => 'btn btn-primary', 'value' => 'items', 'name' => 'GeneratorForm[create]',
-                   'data-confirm' => Yii::t('yii', 'Хотите создать список из категории?')
+                   'data-confirm' => Yii::t('yii', 'Хотите создать список подкатегорий?')
                   ]) ?>
         </div>
     </div>
