@@ -5,23 +5,31 @@ namespace app\controllers;
 use Yii;
 use yii\filters\AccessControl;
 use yii\web\Controller;
+use yii\web\ForbiddenHttpException;
 use yii\filters\VerbFilter;
 use app\models\LoginForm;
+use app\models\GeneratorForm;
 use app\models\ContactForm;
 
-class SiteController extends Controller
+class ExController extends Controller
 {
+    public $defaultAction = 'home';
     public function behaviors()
     {
         return [
             'access' => [
                 'class' => AccessControl::className(),
-                'only' => ['logout'],
+                'only' => ['logout','generator'],
                 'rules' => [
                     [
                         'actions' => ['logout'],
                         'allow' => true,
                         'roles' => ['@'],
+                    ],
+                    [
+                        'actions' => ['generator'],
+                        'allow' => true,
+                        'roles' => ['admin'],
                     ],
                 ],
             ],
@@ -45,11 +53,6 @@ class SiteController extends Controller
                 'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
             ],
         ];
-    }
-
-    public function actionIndex()
-    {
-        return $this->render('index');
     }
 
     public function actionLogin()
@@ -93,4 +96,24 @@ class SiteController extends Controller
     {
         return $this->render('about');
     }
+
+    public function actionHome()
+    {
+        return $this->render('home');
+    }
+
+    public function actionGenerator()
+    {
+        $model = new GeneratorForm();
+        $model->scenario = $this->action->id;
+        if ($model->load(Yii::$app->request->post()) && $model->generate())
+        {
+            return $this->goBack();
+        } else {
+            return $this->render('generator', [
+                'model' => $model,
+            ]);
+        }
+    }
+
 }
