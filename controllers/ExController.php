@@ -5,7 +5,6 @@ namespace app\controllers;
 use Yii;
 use yii\filters\AccessControl;
 use yii\web\Controller;
-use yii\web\ForbiddenHttpException;
 use yii\filters\VerbFilter;
 use app\models\LoginForm;
 use app\models\GeneratorForm;
@@ -83,7 +82,6 @@ class ExController extends Controller
         $model = new ContactForm();
         if ($model->load(Yii::$app->request->post()) && $model->contact(Yii::$app->params['adminEmail'])) {
             Yii::$app->session->setFlash('contactFormSubmitted');
-
             return $this->refresh();
         } else {
             return $this->render('contact', [
@@ -108,7 +106,7 @@ class ExController extends Controller
         $model->scenario = $this->action->id;
         if ($model->load(Yii::$app->request->post()) && $model->generate())
         {
-            return $this->goBack();
+           return $this->refresh();
         } else {
             return $this->render('generator', [
                 'model' => $model,

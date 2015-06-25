@@ -5,6 +5,7 @@ namespace app\models;
 use Yii;
 use yii\base\Model;
 use yii\di\Container;
+use yii\db\Schema;
 //use yii\base\ErrorException;
 use garyjl\simplehtmldom\SimpleHtmlDom;
 
@@ -18,6 +19,11 @@ class GeneratorForm extends Model {
      * @var string
      */
     public $create;
+    /**
+     * Идентификатор категории
+     * @var intiger
+     */
+    public $category_id = 1;
     /**
      * Адрес базовой страницы с категориями
      * @var string
@@ -86,7 +92,7 @@ class GeneratorForm extends Model {
             $cache = $this->cacheFileInit();
             $content = $cache->get($this->urlCategory);
             if ($content === false) {
-                $content = Yii::$app->curl->get('http://' . $this->urlCategory);
+                $content = \Yii::$app->curl->get('http://' . $this->urlCategory);
                 if(!empty($content)){
                   $cache->set($this->urlCategory, $content, 0);
                 }
@@ -134,7 +140,57 @@ class GeneratorForm extends Model {
      * @return boolean Статус операции
      */
     private function seveToDb($table, $data) {
+        if($this->checkTableStructure($table) === true){
+            $rows = [];
+            $columns = array_keys($data[0]);
+            foreach ($data as $value) {
+                $rows[] = array_values($value);
+            }
+            $db = \Yii::$app->db;
+            $command = $db->createCommand();
+            $command->truncateTable($table)->execute();
+            return $command->batchInsert($table, $columns, $rows)->execute();
+        }
         return false;
+    }
+
+    public function isCategory(){
+        $db = \Yii::$app->db;
+        return ($db->schema->getTableSchema('category',true) !== null);
+    }
+    /**
+     * Проверка необходимых таблиц в базе данных
+     * Создание таблицы при необходимых
+     * @param string $table
+     */
+    private function checkTableStructure($table){
+        $db = \Yii::$app->db;
+        $status = true;
+        if ($db->schema->getTableSchema($table,true) === null){
+            switch($table){
+               case 'category':
+                   $this->createShemaCategory();
+                   if($db->schema->getTableSchema($table,true) === null){
+                       $status = false;
+                   }
+               break;
+            }
+        }
+        return $status;
+    }
+    /**
+     * Создание структуры таблицы category
+     */
+    private function createShemaCategory(){
+        $db = \Yii::$app->db;
+        $tableOptions = 'CHARACTER SET utf8 COLLATE utf8_general_ci ENGINE=MyISAM';
+        $command = $db->createCommand();
+        //create table category
+        $command->createTable('category', [
+            'id' => Schema::TYPE_PK,
+            'url' => 'VARCHAR(50) NOT NULL',
+            'text' => 'VARCHAR (50) NOT NULL',
+        ], $tableOptions)->execute();
     }
 
 }
