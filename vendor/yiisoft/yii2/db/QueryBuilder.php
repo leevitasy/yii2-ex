@@ -322,7 +322,7 @@ class QueryBuilder extends \yii\base\Object
                 $cols[] = "\t" . $type;
             }
         }
-        $sql = "CREATE TABLE " . $this->db->quoteTableName($table) . " (\n" . implode(",\n", $cols) . "\n)";
+        $sql = "CREATE TABLE IF NOT EXISTS" . $this->db->quoteTableName($table) . " (\n" . implode(",\n", $cols) . "\n)";
 
         return $options === null ? $sql : $sql . ' ' . $options;
     }
