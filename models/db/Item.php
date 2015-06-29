@@ -3,14 +3,14 @@
 use yii\db\ActiveRecord;
 
 /**
- * Данные таблицы category
+ * Данные таблицы item
  */
-class Category extends ActiveRecord
+class Item extends ActiveRecord
 {
 
     public static function tableName()
     {
-        return 'category';
+        return 'item';
     }
 
     /**
@@ -29,9 +29,12 @@ class Category extends ActiveRecord
     public function attributeLabels()
     {
         return [
-            'id' => 'Category ID',
-            'url' => 'Ссыддка категории',
-            'text' => 'Название категории',
+            'id' => 'Item ID',
+            'category' => 'Cсылка на ID категории',
+            'url' => 'Ссылка подкатегории',
+            'text' => 'Название подкатегории',
+            'revision' => 'Текущая ревизия',
+            'articles' => 'Количество статей в подкатегории',
             'ts' => 'Время последнего обновления содержимого'
         ];
     }

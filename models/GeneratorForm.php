@@ -6,6 +6,7 @@ use Yii;
 use yii\base\Model;
 use yii\di\Container;
 use yii\db\Schema;
+use yii\db\Query;
 //use yii\base\ErrorException;
 use garyjl\simplehtmldom\SimpleHtmlDom;
 use app\models\db\Category;
@@ -29,7 +30,12 @@ class GeneratorForm extends Model {
      * Идентификатор категории
      * @var intiger
      */
-    public $category_id = 1;
+    public $category_id;
+    /**
+     * Идентификатор подкатегории
+     * @var intiger
+     */
+    public $category_item_id;
     /**
      * Адрес базовой страницы с категориями
      * @var string
@@ -42,15 +48,27 @@ class GeneratorForm extends Model {
      */
     public function rules() {
         return [
-            [['create','category_id'], 'required', 'on' => 'generator'],
+            [['create'], 'required', 'on' => 'generator'],
+            [['create','category_id','category_item_id'], 'validateCategoryItemId', 'on' => 'generator']
         ];
+    }
+
+    public function validateCategoryItemId($attribute, $params)
+    {
+        if (!$this->hasErrors()) {
+            if (!empty($this->create)) {
+                    if($this->create === 'items' && empty($this->category_id)){
+                        $this->addError('category_id', 'Категория не выбрана.');
+                    }
+            }
+        }
     }
     /**
      * Точка входа для действия generate, контролера ExController
      * @return boolean Статус
      */
     public function generate() {
-        if ($this->validate()) {
+        if ($this->validate()){
             return $this->buttonAction($this->create);
         } else {
             return false;
@@ -65,8 +83,10 @@ class GeneratorForm extends Model {
     private function buttonAction($action) {
         switch ($action) {
             case 'category':
+                $this->updateCache = true;
                 return $this->buttonCategory();
             case 'items':
+                $this->updateCache = true;
                 return $this->buttonItems();
             default:
                 return false;
@@ -185,63 +205,95 @@ class GeneratorForm extends Model {
     }
 
     /**
-     * Сохранения собраных даных в таблицу базы данных
+     * Сохранения/Обновление собраных даных в таблицу базы данных
      * @param string $table Таблица базы данных
      * @param string $data Даные для наполнения таблицы
      * @return boolean Статус операции
      */
     private function seveToDb($table, $data) {
         if ($this->checkTableStructure($table) === true) {
-            $rows = [];
-            $columns = array_keys($data[0]);
-            foreach ($data as $value) {
-                $rows[] = array_values($value);
-            }
             $db = \Yii::$app->db;
-            $command = $db->createCommand();
-            switch ($table) {
-                case 'category':
-                    $command->truncateTable($table)->execute();
-                    break;
-                case 'item':
-                    $command->delete($table, 'category = ' . $this->category_id)->execute();
-                    break;
+            $transaction = $db->beginTransaction();
+            set_error_handler(create_function('$c, $m, $f, $l', 'return false;'), -1);
+            try {
+                 foreach($data as $rec){
+                    switch ($table) {
+                        case 'category':
+                            $sql = 'SELECT id from ' . $table . ' WHERE url=\'' . $rec['url'] . '\'';
+                            break;
+                        case 'item':
+                            $sql = 'SELECT id from ' . $table . ' WHERE url=\'' . $rec['url'] . '\' AND category=' . $this->category_id;
+                            break;
+                    }
+                    if($this->canUpdateRow($sql, $update_id)){ //update
+                        $db->createCommand()->update($table, $rec, 'id='.$update_id)->execute();
+                    } else { //insert
+                        $db->createCommand()->insert($table, $rec)->execute();
+                    }
+                 }
+                $transaction->commit();
+                restore_error_handler();
+                return true;
+            }catch(Exception $e){
+                $transaction->rollback();
             }
-            return $command->batchInsert($table, $columns, $rows)->execute();
+        }
+        restore_error_handler();
+        return false;
+    }
+
+    private function canUpdateRow($sql, &$update_id) {
+        $db = \Yii::$app->db;
+        $command = $db->createCommand($sql);
+        $reader = $command->query();
+        $reader->bindColumn(1, $update_id);
+        if($reader->read() !== false) return true;
+        return false;
+    }
+
+    /**
+     * Проверка существования таблицы
+     * @param string $table Название таблицы
+     * @return boolean Статус проверки
+     */
+    public function isTableExists($table){
+        $db = \Yii::$app->db;
+        return ($db->schema->getTableSchema($table,true) !== null);
+    }
+
+    /**
+     * Проверка существования данных в таблице
+     * @param string $table Название таблицы
+     * @param array $where Условия проверки
+     * @return boolean Статус проверки
+     */
+    public function isTableHaveData($table, $where = '1 = 1') {
+        if ($this->isTableExists($table)) {
+            $count = (new Query())
+                    ->from($table)
+                    ->where($where)
+                    ->count();
+            return ($count > 0);
         }
         return false;
     }
 
-    public function isCategory(){
-        $db = \Yii::$app->db;
-        return ($db->schema->getTableSchema('category',true) !== null);
-    }
-
-    public function isItem(){
-        $db = \Yii::$app->db;
-        return ($db->schema->getTableSchema('item',true) !== null);
-    }
     /**
      * Проверка необходимых таблиц в базе данных
      * Создание таблицы при необходимых
      * @param string $table
      */
     private function checkTableStructure($table){
-        $db = \Yii::$app->db;
         $status = true;
-        if ($db->schema->getTableSchema($table,true) === null){
+        if (!$this->isTableExists($table)){
             switch($table){
                case 'category':
                    $this->createShemaCategory();
-                   if($db->schema->getTableSchema($table,true) === null){
-                       $status = false;
-                   }
+                   $status = $this->isTableExists($table);
                break;
                case 'item':
                    $this->createShemaItem();
-                   if($db->schema->getTableSchema($table,true) === null){
-                       $status = false;
-                   }
+                   $status = $this->isTableExists($table);
                break;
             }
         }
@@ -261,6 +313,8 @@ class GeneratorForm extends Model {
             'text' => 'VARCHAR (50) NOT NULL',
             'ts' => 'TIMESTAMP on update CURRENT_TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP'
         ], $tableOptions)->execute();
+        //add index
+        $command->createIndex('un_category_url', 'category', 'url', true)->execute();
     }
 
     /**
@@ -280,5 +334,8 @@ class GeneratorForm extends Model {
             'articles' => 'INT(2) NOT NULL DEFAULT \'0\'',
             'ts' => 'TIMESTAMP on update CURRENT_TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP'
         ], $tableOptions)->execute();
+        //add index
+        $command->createIndex('in_item_category', 'item', 'category')->execute();
+        $command->createIndex('un_item_category_url', 'item', ['category','url'], true)->execute();
     }
 }

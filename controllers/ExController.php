@@ -104,14 +104,11 @@ class ExController extends Controller
     {
         $model = new GeneratorForm();
         $model->scenario = $this->action->id;
-        if ($model->load(Yii::$app->request->post()) && $model->generate())
-        {
-           return $this->refresh();
-        } else {
-            return $this->render('generator', [
-                'model' => $model,
-            ]);
-        }
+        $model->load(Yii::$app->request->post());
+        $status = ($model->load(Yii::$app->request->post()) && $model->generate());
+        return $this->render('generator', [
+            'model' => $model,
+        ]);
     }
 
 }
