@@ -109,12 +109,6 @@ class GeneratorForm extends Model {
     private function getCategory($url) {
         $category = [];
         set_error_handler(create_function('$c, $m, $f, $l', 'return false;'), -1);
-        //set_error_handler(
-        //    create_function(
-        //        '$c, $m, $f, $l',
-        //        'throw new ErrorException($errstr, $errno, 0, $errfile, $errline);'
-        //    ),-1
-        //);
         try {
             $content = $this->getContent($url);
             if(!empty($content)){
@@ -205,7 +199,7 @@ class GeneratorForm extends Model {
     }
 
     /**
-     * Сохранения/Обновление собраных даных в таблицу базы данных
+     * Сохранение/Обновление собраных даных в таблицу базы данных
      * @param string $table Таблица базы данных
      * @param string $data Даные для наполнения таблицы
      * @return boolean Статус операции
@@ -242,6 +236,12 @@ class GeneratorForm extends Model {
         return false;
     }
 
+    /**
+     * Проверка возможности обновления данных
+     * @param string $sql SQL-запрос проверки
+     * @param intiger $update_id  ID записи что будем обновлять
+     * @return boolean Статус проверки
+     */
     private function canUpdateRow($sql, &$update_id) {
         $db = \Yii::$app->db;
         $command = $db->createCommand($sql);
