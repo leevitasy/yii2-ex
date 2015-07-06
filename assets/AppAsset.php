@@ -19,9 +19,12 @@ class AppAsset extends AssetBundle
     public $baseUrl = '@web';
     public $css = [
         'css/ex.css',
+        'css/jquery.loadmask.css',
     ];
     public $js = [
-      'js/bootbox.min.js', 'js/main.js'
+      'js/bootbox.min.js',
+      'js/jquery.loadmask.min.js',
+      'js/main.js'
     ];
     public $depends = [
         'yii\web\YiiAsset',
