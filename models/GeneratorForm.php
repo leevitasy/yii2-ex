@@ -17,6 +17,18 @@ use app\models\db\Category;
 class GeneratorForm extends Model {
 
     /**
+     * Валидация формы акивна
+     * @var string
+     */
+    public $ajax;
+
+    /**
+     * Постраничная обработка статей
+     * Содержит текущий номер обрабатываемой страницы
+     * @var integer
+     */
+    public $articles_page_step = 0;
+    /**
      * Обновить документы в кеше новыми записями
      * @var bollean
      */
@@ -36,6 +48,12 @@ class GeneratorForm extends Model {
      * @var intiger
      */
     public $category_item_id;
+
+    /**
+     * Запрос ответа в формате json для действия
+     * @var string
+     */
+    public $json;
     /**
      * Адрес базовой страницы с категориями
      * @var string
@@ -48,7 +66,9 @@ class GeneratorForm extends Model {
      */
     public function rules() {
         return [
-            [['create'], 'required', 'on' => 'generator'],
+            //[['create'], 'required', 'on' => 'generator'],
+            [['ajax','json'], 'safe', 'on' => 'generator'],
+            [['articles_page_step'], 'default', 'value' => 0, 'on' => 'generator'],
             [['create','category_id','category_item_id'], 'validateCategoryItemId', 'on' => 'generator']
         ];
     }
@@ -59,6 +79,9 @@ class GeneratorForm extends Model {
             if (!empty($this->create)) {
                     if($this->create === 'items' && empty($this->category_id)){
                         $this->addError('category_id', 'Категория не выбрана.');
+                    }
+                    if($this->create === 'articles' && empty($this->category_item_id)){
+                        $this->addError('category_item_id', 'Подкатегория не выбрана.');
                     }
             }
         }
@@ -88,9 +111,16 @@ class GeneratorForm extends Model {
             case 'items':
                 $this->updateCache = true;
                 return $this->buttonItems();
+            case 'articles':
+                $this->updateCache = false;
+                return $this->buttonArticles();
             default:
                 return false;
         }
+    }
+    private function buttonArticles(){
+            sleep(2);
+            return true;
     }
     /**
      * Обработка нажатия на кнопку получения категорий
@@ -337,5 +367,20 @@ class GeneratorForm extends Model {
         //add index
         $command->createIndex('in_item_category', 'item', 'category')->execute();
         $command->createIndex('un_item_category_url', 'item', ['category','url'], true)->execute();
+    }
+
+    public function getResult(){
+        $out = [];
+        $out['success'] = true;
+        $out['articles'] = $this->articles_page_step;
+        $out['pageTotal'] = 5;
+       return $out;
+    }
+
+    public function getAllError(){
+        $out = [];
+        $out['failure'] = true;
+        $out['msg'] = 'this error msg';
+       return $out;
     }
 }

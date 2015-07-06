@@ -9,6 +9,8 @@ use yii\filters\VerbFilter;
 use app\models\LoginForm;
 use app\models\GeneratorForm;
 use app\models\ContactForm;
+use yii\web\Response;
+use yii\widgets\ActiveForm;
 
 class ExController extends Controller
 {
@@ -61,7 +63,7 @@ class ExController extends Controller
         }
 
         $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
+        if ($model->load(\Yii::$app->request->post()) && $model->login()) {
             return $this->goBack();
         } else {
             return $this->render('login', [
@@ -72,7 +74,7 @@ class ExController extends Controller
 
     public function actionLogout()
     {
-        Yii::$app->user->logout();
+        \Yii::$app->user->logout();
 
         return $this->goHome();
     }
@@ -80,8 +82,8 @@ class ExController extends Controller
     public function actionContact()
     {
         $model = new ContactForm();
-        if ($model->load(Yii::$app->request->post()) && $model->contact(Yii::$app->params['adminEmail'])) {
-            Yii::$app->session->setFlash('contactFormSubmitted');
+        if ($model->load(\Yii::$app->request->post()) && $model->contact(\Yii::$app->params['adminEmail'])) {
+            \Yii::$app->session->setFlash('contactFormSubmitted');
             return $this->refresh();
         } else {
             return $this->render('contact', [
@@ -100,12 +102,51 @@ class ExController extends Controller
         return $this->render('home');
     }
 
+    private function performAjaxValidation($model){
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+        return ActiveForm::validate($model);
+    }
+
+    private function outResult($model){
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+        return $model->getResult();
+    }
+
+    private function outError($model){
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+        return $model->getAllError();
+    }
+
     public function actionGenerator()
     {
         $model = new GeneratorForm();
         $model->scenario = $this->action->id;
-        $model->load(Yii::$app->request->post());
-        $status = ($model->load(Yii::$app->request->post()) && $model->generate());
+        $post = \Yii::$app->request->post();
+        $get = \Yii::$app->request->get();
+        $formName = $model->formName();
+        $post[$formName]['ajax'] = (
+            (isset($post['ajax']))
+               ? $post['ajax']
+               : ''
+        );
+        $post[$formName]['json'] = (
+            (isset($get['json']))
+               ? $get['json']
+               : ''
+        );
+        $model->load($post);
+        unset($get,$post['ajax']);
+        if(\Yii::$app->request->isAjax && !empty($model->ajax)){
+            return $this->performAjaxValidation($model);
+        }
+        $status = $model->generate();
+        if(\Yii::$app->request->isAjax){
+          if($status === true){
+             return $this->outResult($model);
+          }else{
+             return $this->outError($model);
+          }
+        }
         return $this->render('generator', [
             'model' => $model,
         ]);

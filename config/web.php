@@ -44,6 +44,7 @@ $config = [
         'urlManager' => [
             'rules'=>array(
                 //'<controller>/<action>' => '<controller>/<action>'
+                '<controller>/<action>/json/<json:(|\w+)>' => '<controller>/<action>',
             ),
             'enablePrettyUrl' => true,
             'showScriptName' => false,
